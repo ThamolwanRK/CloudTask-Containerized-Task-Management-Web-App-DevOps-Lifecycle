@@ -1,0 +1,22 @@
+# Virtual environment — not needed, we install fresh inside the container
+venv/
+
+# Python cache files — not needed in the container
+__pycache__/
+*.pyc
+
+# SQLite database — we want a fresh database inside the container
+instance/
+
+# Git files — not relevant to running the app
+.git/
+.gitignore
+
+# Docker files — don't need to copy themselves into the image
+Dockerfile
+.dockerignore
+
+# IDE and editor files
+.vscode/
+*.swp
+*.swo
