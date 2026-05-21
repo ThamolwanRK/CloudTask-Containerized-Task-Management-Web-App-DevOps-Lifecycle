@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudTask - DevOps Task Board</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom Style Sheet -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom py-3 mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fa-solid fa-cloud-bolt me-2"></i> CloudTask
+            </a>
+            <span class="navbar-text text-white-50 d-none d-sm-inline">
+                Task Management Web Application
+            </span>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container mb-5">
+
+        <!-- Flask Flash Alerts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {% if category == 'success' %}
+                    <i class="fa-solid fa-circle-check me-2"></i>
+                    {% elif category == 'danger' %}
+                    <i class="fa-solid fa-circle-xmark me-2"></i>
+                    {% else %}
+                    <i class="fa-solid fa-circle-info me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Dashboard Statistics Section -->
+        <div class="row g-3 mb-4">
+            <!-- Total Tasks Card -->
+            <div class="col-6 col-md-3">
+                <div class="card metric-card total p-3">
+                    <div class="card-body p-0">
+                        <h6 class="text-white-50 text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Total Tasks
+                        </h6>
+                        <h2 class="fw-bold m-0">{{ total_tasks }}</h2>
+                        <i class="fa-solid fa-list-check metric-icon"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- Completed Tasks Card -->
+            <div class="col-6 col-md-3">
+                <div class="card metric-card completed p-3">
+                    <div class="card-body p-0">
+                        <h6 class="text-white-50 text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Completed</h6>
+                        <h2 class="fw-bold m-0">{{ completed_tasks }}</h2>
+                        <i class="fa-solid fa-circle-check metric-icon"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- Pending Tasks Card -->
+            <div class="col-6 col-md-3">
+                <div class="card metric-card pending p-3">
+                    <div class="card-body p-0">
+                        <h6 class="text-white-50 text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Pending</h6>
+                        <h2 class="fw-bold m-0">{{ pending_tasks }}</h2>
+                        <i class="fa-solid fa-clock metric-icon"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- Completion Rate Card -->
+            <div class="col-6 col-md-3">
+                <div class="card metric-card rate p-3">
+                    <div class="card-body p-0">
+                        <h6 class="text-white-50 text-uppercase fw-bold mb-1" style="font-size: 0.75rem;">Completion
+                            Rate</h6>
+                        <h2 class="fw-bold m-0">{{ completion_rate }}%</h2>
+                        <i class="fa-solid fa-percent metric-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Task Form -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card custom-card p-4">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-plus-circle text-primary me-2"></i>Create New Task
+                    </h5>
+                    <form action="/add" method="POST">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <input type="text" name="title" class="form-control py-2"
+                                    placeholder="Task Title (e.g. Test Dockerfile)" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="description" class="form-control py-2"
+                                    placeholder="Optional details...">
+                            </div>
+                            <div class="col-md-2 d-grid">
+                                <button type="submit" class="btn btn-custom-primary py-2"><i
+                                        class="fa-solid fa-plus me-1"></i> Add Task</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Boards Row -->
+        <div class="row g-4">
+
+            <!-- Column 1: Active Tasks -->
+            <div class="col-md-6">
+                <div class="card custom-card p-3 h-100">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-indigo">
+                        <i class="fa-solid fa-hourglass-half text-indigo me-2"></i>Active Tasks
+                        <span class="badge bg-primary rounded-pill float-end">{{ pending_tasks }}</span>
+                    </h5>
+
+                    {% if pending_tasks == 0 %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-mug-hot fa-2x mb-2 text-secondary"></i>
+                        <p class="m-0">No active tasks. Time to relax, or create one!</p>
+                    </div>
+                    {% else %}
+                    <div class="list-group list-group-flush">
+                        {% for task in tasks if not task.completed %}
+                        <div
+                            class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-bottom task-item active-task ps-3 mb-2 rounded bg-light">
+                            <div class="me-3">
+                                <h6 class="fw-bold mb-1">{{ task.title }}</h6>
+                                <p class="text-secondary small m-0">{{ task.description or 'No description provided.' }}
+                                </p>
+                                <small class="text-black-50" style="font-size: 0.7rem;">
+                                    <i class="fa-regular fa-clock me-1"></i>{{ task.created_at.strftime('%Y-%m-%d
+                                    %H:%M') }}
+                                </small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 pe-3">
+                                <!-- Complete Button Form -->
+                                <form action="/toggle/{{ task.id }}" method="POST">
+                                    <button type="submit" class="btn btn-sm btn-outline-success toggle-btn"
+                                        title="Mark Completed">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                </form>
+                                <!-- Delete Button Form -->
+                                <form action="/delete/{{ task.id }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                    <button type="submit"
+                                        class="btn btn-sm btn-outline-danger toggle-btn border-danger text-danger"
+                                        title="Delete Task">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Column 2: Completed Tasks -->
+            <div class="col-md-6">
+                <div class="card custom-card p-3 h-100">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2 text-success">
+                        <i class="fa-solid fa-circle-check text-success me-2"></i>Completed Tasks
+                        <span class="badge bg-success rounded-pill float-end">{{ completed_tasks }}</span>
+                    </h5>
+
+                    {% if completed_tasks == 0 %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-regular fa-clipboard fa-2x mb-2 text-secondary"></i>
+                        <p class="m-0">No completed tasks yet. Keep moving forward!</p>
+                    </div>
+                    {% else %}
+                    <div class="list-group list-group-flush">
+                        {% for task in tasks if task.completed %}
+                        <div
+                            class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-bottom task-item completed-task ps-3 mb-2 rounded">
+                            <div class="me-3">
+                                <h6 class="fw-bold mb-1 task-title-strikethrough">{{ task.title }}</h6>
+                                <p class="text-secondary small m-0 task-title-strikethrough">{{ task.description }}</p>
+                                <small class="text-black-50" style="font-size: 0.7rem;">
+                                    <i class="fa-regular fa-calendar-check me-1"></i>Completed
+                                </small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 pe-3">
+                                <!-- Re-activate Button Form -->
+                                <form action="/toggle/{{ task.id }}" method="POST">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary toggle-btn"
+                                        title="Mark Active">
+                                        <i class="fa-solid fa-arrow-rotate-left"></i>
+                                    </button>
+                                </form>
+                                <!-- Delete Button Form -->
+                                <form action="/delete/{{ task.id }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                    <button type="submit"
+                                        class="btn btn-sm btn-outline-danger toggle-btn border-danger text-danger"
+                                        title="Delete Task">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Bootstrap 5 Bundle with Popper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
