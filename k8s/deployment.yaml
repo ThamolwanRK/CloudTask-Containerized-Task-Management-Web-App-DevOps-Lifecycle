@@ -1,0 +1,33 @@
+# ============================================================
+# Kubernetes Deployment for CloudTask
+# Phase 3: Kubernetes + Minikube
+# ============================================================
+# A Deployment tells Kubernetes:
+#   - Which container image to run
+#   - How many copies (replicas) to keep running
+#   - What port the container listens on
+# ============================================================
+
+apiVersion: apps/v1          # Kubernetes API version for Deployments
+kind: Deployment              # Resource type: Deployment
+metadata:
+  name: cloudtask-deployment  # Name of this Deployment
+  labels:
+    app: cloudtask            # Label to identify this app
+
+spec:
+  replicas: 1                 # Run 1 copy (SQLite is file-based, so multiple replicas would have separate databases)
+  selector:
+    matchLabels:
+      app: cloudtask          # Tell the Deployment which Pods to manage
+  template:
+    metadata:
+      labels:
+        app: cloudtask        # Label applied to each Pod
+    spec:
+      containers:
+        - name: cloudtask                   # Name of the container
+          image: cloudtask:latest           # Docker image name (loaded into Minikube)
+          imagePullPolicy: Never            # Don't pull from Docker Hub; use local image
+          ports:
+            - containerPort: 5000           # Port the Flask app listens on

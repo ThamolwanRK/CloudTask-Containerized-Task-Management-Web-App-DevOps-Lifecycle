@@ -1,0 +1,25 @@
+# ============================================================
+# Kubernetes Service for CloudTask
+# Phase 3: Kubernetes + Minikube
+# ============================================================
+# A Service provides a stable way to access your Pods.
+# NodePort type exposes the app on a port on the Minikube node,
+# so you can open it in your browser.
+# ============================================================
+
+apiVersion: v1                # Kubernetes API version for Services
+kind: Service                 # Resource type: Service
+metadata:
+  name: cloudtask-service     # Name of this Service
+  labels:
+    app: cloudtask            # Label to identify this service
+
+spec:
+  type: NodePort              # Expose the app outside the cluster
+  selector:
+    app: cloudtask            # Route traffic to Pods with this label
+  ports:
+    - protocol: TCP
+      port: 5000              # Port the Service listens on (inside the cluster)
+      targetPort: 5000        # Port on the container to forward traffic to
+      nodePort: 30080         # Port accessible from outside (range: 30000-32767)
