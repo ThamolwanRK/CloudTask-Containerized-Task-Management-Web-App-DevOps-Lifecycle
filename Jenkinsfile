@@ -9,6 +9,20 @@
 pipeline {
     agent any    // Run on any available Jenkins agent (your local machine)
 
+    // --------------------------------------------------------
+    // Environment Variables
+    // Jenkins runs as the Windows Local System account (SYSTEM),
+    // whose home is C:\Windows\system32\config\systemprofile.
+    // Minikube and kubectl look for configs under the current
+    // user's home by default, so SYSTEM cannot find your
+    // Minikube cluster or kubeconfig. Setting these two variables
+    // tells the tools exactly where to look.
+    // --------------------------------------------------------
+    environment {
+        MINIKUBE_HOME = 'C:\\Users\\thamo\\.minikube'
+        KUBECONFIG    = 'C:\\Users\\thamo\\.kube\\config'
+    }
+
     stages {
 
         // --------------------------------------------------------
@@ -62,6 +76,13 @@ pipeline {
         // --------------------------------------------------------
         stage('Deploy to Kubernetes') {
             steps {
+                // Debug: verify Jenkins can see Minikube and the K8s cluster
+                bat 'echo MINIKUBE_HOME=%MINIKUBE_HOME%'
+                bat 'echo KUBECONFIG=%KUBECONFIG%'
+                bat 'minikube status'
+                bat 'kubectl config current-context'
+                bat 'kubectl get nodes'
+
                 // Load the Docker image into Minikube's internal registry
                 bat 'minikube image load cloudtask:latest'
 
