@@ -1,0 +1,23 @@
+# ============================================================
+# Prometheus Service for CloudTask
+# Phase 5: Monitoring with Prometheus & Grafana
+# ============================================================
+# This Service exposes Prometheus on a NodePort so you can
+# access the Prometheus web UI from your browser.
+# ============================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+  labels:
+    app: prometheus
+spec:
+  type: NodePort                   # Expose outside the cluster
+  selector:
+    app: prometheus                # Route traffic to Prometheus pods
+  ports:
+    - protocol: TCP
+      port: 9090                   # Port inside the cluster
+      targetPort: 9090             # Port on the container
+      nodePort: 30090              # Port accessible from your browser (http://<minikube-ip>:30090)

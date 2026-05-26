@@ -1,0 +1,28 @@
+# ============================================================
+# Prometheus ConfigMap for CloudTask
+# Phase 5: Monitoring with Prometheus & Grafana
+# ============================================================
+# A ConfigMap stores configuration data as key-value pairs.
+# Here we store the Prometheus configuration file (prometheus.yml)
+# so that Prometheus knows which targets to scrape for metrics.
+# ============================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config          # Name used to reference this config
+  labels:
+    app: prometheus
+data:
+  prometheus.yml: |
+    # Prometheus global settings
+    global:
+      scrape_interval: 15s         # How often Prometheus scrapes metrics (every 15 seconds)
+
+    # Scrape configurations - tell Prometheus where to find metrics
+    scrape_configs:
+      # Job 1: Scrape the CloudTask Flask app
+      - job_name: 'cloudtask'
+        static_configs:
+          - targets: ['cloudtask-service:5000']   # Service name and port inside the cluster
+        metrics_path: '/metrics'                  # The endpoint our Flask app exposes

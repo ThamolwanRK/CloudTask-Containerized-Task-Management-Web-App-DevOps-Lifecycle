@@ -1,6 +1,41 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, Response
 from models import db, Task
+
+# ============================================================
+# Prometheus Monitoring Setup (Phase 5)
+# ============================================================
+# prometheus_client is a Python library that lets us create
+# custom metrics and expose them at /metrics for Prometheus
+# to scrape periodically.
+# ============================================================
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+
+# --- Define Prometheus Metrics ---
+
+# Counts every HTTP request the app receives (any route)
+REQUEST_COUNT = Counter(
+    'cloudtask_http_requests_total',
+    'Total number of HTTP requests received'
+)
+
+# Counts how many tasks have been created via the /add route
+TASKS_CREATED = Counter(
+    'cloudtask_tasks_created_total',
+    'Total number of tasks created'
+)
+
+# Counts how many tasks have been deleted via the /delete route
+TASKS_DELETED = Counter(
+    'cloudtask_tasks_deleted_total',
+    'Total number of tasks deleted'
+)
+
+# Counts how many times a task status has been toggled (complete/incomplete)
+TASKS_TOGGLED = Counter(
+    'cloudtask_tasks_toggled_total',
+    'Total number of task status toggles'
+)
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -19,6 +54,28 @@ db.init_app(app)
 # Ensure the database tables are created before handling any request
 with app.app_context():
     db.create_all()
+
+
+# ============================================================
+# Prometheus: Count every incoming request
+# ============================================================
+@app.before_request
+def count_requests():
+    """Increment the request counter on every incoming HTTP request."""
+    REQUEST_COUNT.inc()
+
+
+# ============================================================
+# Prometheus: /metrics endpoint
+# ============================================================
+@app.route('/metrics')
+def metrics():
+    """
+    Expose all Prometheus metrics in plain-text format.
+    Prometheus will scrape this endpoint periodically.
+    """
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
 
 @app.route('/')
 def index():
@@ -67,6 +124,7 @@ def add_task():
         # Add to session and save to SQLite database
         db.session.add(new_task)
         db.session.commit()
+        TASKS_CREATED.inc()  # Prometheus: count task creation
         flash('Task added successfully!', 'success')
     except Exception as e:
         db.session.rollback()
@@ -86,6 +144,7 @@ def toggle_task(task_id):
 
     try:
         db.session.commit()
+        TASKS_TOGGLED.inc()  # Prometheus: count task toggle
         status_text = "completed" if task.completed else "active"
         flash(f'Task marked as {status_text}!', 'info')
     except Exception as e:
@@ -105,6 +164,7 @@ def delete_task(task_id):
         # Remove from database session and commit
         db.session.delete(task)
         db.session.commit()
+        TASKS_DELETED.inc()  # Prometheus: count task deletion
         flash('Task deleted successfully!', 'warning')
     except Exception as e:
         db.session.rollback()

@@ -1,0 +1,39 @@
+# ============================================================
+# Prometheus Deployment for CloudTask
+# Phase 5: Monitoring with Prometheus & Grafana
+# ============================================================
+# This Deployment runs a single Prometheus container.
+# It mounts the ConfigMap we created so Prometheus knows
+# which targets to scrape.
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-deployment
+  labels:
+    app: prometheus
+spec:
+  replicas: 1                       # Run 1 copy of Prometheus
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:latest           # Official Prometheus image from Docker Hub
+          ports:
+            - containerPort: 9090                 # Prometheus web UI port
+          args:
+            - '--config.file=/etc/prometheus/prometheus.yml'   # Tell Prometheus where its config is
+          volumeMounts:
+            - name: prometheus-config-volume
+              mountPath: /etc/prometheus          # Mount the config inside the container
+      volumes:
+        - name: prometheus-config-volume
+          configMap:
+            name: prometheus-config               # Reference the ConfigMap we created

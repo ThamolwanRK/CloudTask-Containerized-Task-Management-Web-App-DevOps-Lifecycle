@@ -1,0 +1,23 @@
+# ============================================================
+# Grafana Service for CloudTask
+# Phase 5: Monitoring with Prometheus & Grafana
+# ============================================================
+# This Service exposes Grafana on a NodePort so you can
+# access the Grafana dashboard from your browser.
+# ============================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  labels:
+    app: grafana
+spec:
+  type: NodePort                   # Expose outside the cluster
+  selector:
+    app: grafana                   # Route traffic to Grafana pods
+  ports:
+    - protocol: TCP
+      port: 3000                   # Port inside the cluster
+      targetPort: 3000             # Port on the container
+      nodePort: 30030              # Port accessible from your browser (http://<minikube-ip>:30030)

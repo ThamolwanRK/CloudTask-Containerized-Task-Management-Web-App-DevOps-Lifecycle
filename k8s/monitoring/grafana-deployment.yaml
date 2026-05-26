@@ -1,0 +1,36 @@
+# ============================================================
+# Grafana Deployment for CloudTask
+# Phase 5: Monitoring with Prometheus & Grafana
+# ============================================================
+# This Deployment runs a single Grafana container.
+# Grafana is a dashboarding tool that connects to Prometheus
+# and displays metrics as graphs, charts, and panels.
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-deployment
+  labels:
+    app: grafana
+spec:
+  replicas: 1                       # Run 1 copy of Grafana
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest           # Official Grafana image from Docker Hub
+          ports:
+            - containerPort: 3000                 # Grafana web UI port
+          env:
+            # Default admin credentials (change in production!)
+            - name: GF_SECURITY_ADMIN_USER
+              value: "admin"
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "admin"
